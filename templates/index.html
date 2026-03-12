@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReachAI · Teacher Assistant</title>
+    <!-- Font & style reset -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background: #0b0b0f;
+            color: white;
+            height: 100vh;
+            display: flex;
+        }
+
+        /* ---------- SIDEBAR (exact match with first UI code & image) ---------- */
+        .app-layout {
+            display: flex;
+            width: 100%;
+            background: #0b0b0f;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: #111218;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #262a33;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(145deg, #ffffff, #a5b9ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 32px;
+            letter-spacing: -0.5px;
+        }
+
+        .nav {
+            margin-bottom: 28px;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            border-radius: 14px;
+            margin-bottom: 6px;
+            color: #98a2b8;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: default;
+        }
+
+        .nav-item.active {
+            background: #1f2430;
+            color: white;
+        }
+
+        .history-title {
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            color: #5f6b89;
+            font-weight: 600;
+            margin: 24px 0 16px 8px;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: #1a1e29;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 0.9rem;
+            color: #eef3fc;
+            border: 1px solid #2a3140;
+            cursor: pointer;
+            transition: 0.1s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .history-item:hover {
+            background: #262e3f;
+            border-color: #3f506f;
+        }
+
+        .action-group {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .new-chat, .clear-chat {
+            border: none;
+            padding: 14px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+            text-align: center;
+        }
+
+        .new-chat {
+            background: #2a3348;
+            color: white;
+            border: 1px solid #3d4a64;
+        }
+
+        .clear-chat {
+            background: #2a1f28;
+            color: #f5a3a3;
+            border: 1px solid #5a3e4a;
+        }
+
+        .new-chat:hover, .clear-chat:hover {
+            filter: brightness(1.2);
+        }
+
+        /* ---------- MAIN PANEL (cards, chat box) ---------- */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 32px;
+            overflow-y: auto;
+            background: #0e1016;
+        }
+
+        .content-card {
+            max-width: 900px;
+            width: 100%;
+            background: #151a24;
+            border-radius: 40px;
+            padding: 40px 48px;
+            border: 1px solid #2d3545;
+            box-shadow: 0 20px 40px -10px black;
+        }
+
+        .main h1 {
+            font-size: 2.8rem;
+            font-weight: 600;
+            letter-spacing: -1px;
+            margin-bottom: 32px;
+        }
+
+        .main h1 span {
+            background: linear-gradient(to right, white, #b0c8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* feature cards exactly as second code + modern touch */
+        .feature-cards {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 48px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .card {
+            width: 200px;
+            padding: 24px 20px;
+            border-radius: 32px;
+            background: #1f2635;
+            border: 1px solid #313f57;
+            transition: 0.2s;
+        }
+
+        .card.blue { background: linear-gradient(145deg, #1e2b47, #141f33); border-color: #2e4b8a; }
+        .card.brown { background: linear-gradient(145deg, #372d1e, #241f16); border-color: #8b6d4c; }
+        .card.purple { background: linear-gradient(145deg, #2a1e3a, #1c1529); border-color: #6b47a3; }
+
+        .card .icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            color: white;
+        }
+
+        .card span {
+            font-size: 0.8rem;
+            color: #b1c3e0;
+            line-height: 1.4;
+        }
+
+        /* toggle row (text/image/voice) – from first backend code */
+        .input-toggles {
+            display: flex;
+            gap: 10px;
+            background: #1e232f;
+            padding: 6px;
+            border-radius: 60px;
+            width: fit-content;
+            margin: 0 auto 28px auto;
+            border: 1px solid #2f3a4d;
+        }
+
+        .toggle-option {
+            padding: 8px 26px;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #94a9cf;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            white-space: nowrap;
+        }
+
+        .toggle-option input[type="radio"] {
+            display: none;
+        }
+
+        .toggle-option:has(input:checked) {
+            background: #2b344a;
+            color: white;
+        }
+
+        /* dynamic input areas */
+        .input-area {
+            background: #1a212d;
+            border-radius: 32px;
+            padding: 24px;
+            border: 1px solid #2c374b;
+            margin-bottom: 24px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .input-row textarea {
+            flex: 1;
+            background: #0f1621;
+            border: 1px solid #2f3d57;
+            border-radius: 28px;
+            padding: 16px 22px;
+            font-size: 1rem;
+            color: white;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .input-row textarea:focus {
+            outline: 2px solid #3b82f6;
+            border-color: transparent;
+        }
+
+        .voice-btn {
+            background: #27324a;
+            border: none;
+            width: 58px;
+            height: 58px;
+            border-radius: 40px;
+            font-size: 1.7rem;
+            color: white;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .voice-btn.recording {
+            background: #b43434;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 #b4343480; } 70% { box-shadow: 0 0 0 14px #b4343400; } }
+
+        .file-zone {
+            background: #0f1621;
+            border-radius: 28px;
+            padding: 20px;
+            border: 1px dashed #43506d;
+            text-align: center;
+        }
+
+        .file-zone input, .image-query {
+            background: #1b2331;
+            border: 1px solid #3e4d6b;
+            padding: 12px 18px;
+            border-radius: 40px;
+            color: white;
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        .generate-btn {
+            background: #0773D6;
+            border: none;
+            padding: 16px 38px;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 1.1rem;
+             color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            margin: 16px 0 10px;
+            border: 1px solid #a3b9ff;
+            box-shadow: 0 10px 18px #1e3a8a40;
+        }
+
+        .solution-card {
+            background: #1b232f;
+            border-radius: 32px;
+            padding: 28px;
+            margin-top: 28px;
+            border: 1px solid #384662;
+            position: relative;
+        }
+
+        .save-badge {
+            position: absolute;
+            top: 20px;
+            right: 26px;
+            background: #28344b;
+            padding: 8px 24px;
+            border-radius: 60px;
+            color: #bfd5ff;
+            border: 1px solid #5c71a0;
+            cursor: pointer;
+        }
+
+        .feedback-row {
+            display: flex;
+            gap: 20px;
+            margin-top: 32px;
+            justify-content: center;
+        }
+        .fb-btn {
+            background: #2a334b;
+            border: 1px solid #53688b;
+            padding: 12px 42px;
+            border-radius: 60px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .fb-btn.good:hover { background: #1f7543; }
+        .fb-btn.bad:hover { background: #9e4242; }
+
+        .hidden { display: none !important; }
+        .toast-container { position: fixed; bottom: 25px; right: 25px; z-index: 999; }
+        .toast { background: #252f44; border-left: 4px solid #3b82f6; padding: 14px 28px; border-radius: 60px; color: white; margin-top: 10px; }
+
+        .uploaded-image { max-width: 180px; border-radius: 28px; margin: 10px 0; border: 3px solid #3b4b68; }
+        .feedback-message { padding: 14px; border-radius: 40px; margin: 16px 0; }
+        .feedback-message.success { background: #143f28; color: #a0e0a0; }
+        .feedback-message.error { background: #3d1e2a; color: #ffb3b3; }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <!-- SIDEBAR (exactly as first backend code + second UI image) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <aside class="sidebar">
+        <div class="logo">ReachAI</div>
+        <nav class="nav">
+            <div class="nav-item active">
+        <i class="fa-solid fa-house"></i> Home
+    </div>
+           <div class="nav-item">
+        <i class="fa-solid fa-comments"></i> Chat
+    </div>
+        </nav>
+
+        <div class="history-title">History</div>
+        <div class="history-list" id="historySidebar"></div>
+
+        <div class="action-group">
+            <button class="new-chat" id="newChatBtn">+ New Chat</button>
+            <button class="clear-chat" id="clearAllBtn">🗑️ Clear All</button>
+        </div>
+
+        <!-- bottom prompt (from image) -->
+        
+    </aside>
+
+    <!-- MAIN PANEL -->
+    <main class="main" id="mainPanel">
+        <div class="content-card" id="mainInterface">
+            <h1>Welcome to <span>ReachAI</span></h1>
+
+            <!-- feature cards -->
+            <div class="feature-cards">
+                <div class="card blue">
+                    <div class="icon">⚙️</div>
+                    <h3>Task Automation</h3>
+                    <span>Automation tasks like scheduling and reminders</span>
+                </div>
+                <div class="card brown">
+                    <div class="icon">🎤</div>
+                    <h3>Voice Record</h3>
+                    <span>Ask with voice and get the best answer</span>
+                </div>
+                <div class="card purple">
+                    <div class="icon">🖼️</div>
+                    <h3>Image</h3>
+                    <span>Answer questions from pictures and detect them</span>
+                </div>
+            </div>
+
+            <!-- backend form: input type toggle -->
+            <form method="POST" enctype="multipart/form-data" id="mainForm" action="{{ url_for('index') }}">
+                <div class="input-toggles">
+                    <label class="toggle-option">
+                        <input type="radio" name="input_type" value="text" onchange="toggleInputs()" {% if selected_input_type == 'text' or not selected_input_type %}checked{% endif %}> 📝 Text
+                    </label>
+                    <label class="toggle-option">
+                        <input type="radio" name="input_type" value="image" onchange="toggleInputs()" {% if selected_input_type == 'image' %}checked{% endif %}> 🖼️ Image
+                    </label>
+                    <label class="toggle-option">
+                        <input type="radio" name="input_type" value="voice" onchange="toggleInputs()" {% if selected_input_type == 'voice' %}checked{% endif %}> 🎤 Voice
+                    </label>
+                </div>
+
+                <!-- text/voice block -->
+                <div id="textVoiceBlock">
+                    <div class="input-area">
+                        <div class="input-row">
+                            <textarea name="text_input" id="textInput" placeholder="Ask me anything...">{{ user_query or '' }}</textarea>
+                            <button type="button" class="voice-btn" id="voiceRecordBtn" title="Voice input">🎤</button>
+                        </div>
+                        <div id="voiceStatus" style="font-size:0.8rem; color:#94a9d1; margin-top:8px;"></div>
+                    </div>
+                </div>
+
+                <!-- image block (hidden unless image selected) -->
+                <div id="imageBlock" style="display: none;">
+                    <div class="file-zone">
+                        <label for="imageFile">📁 Upload Image</label>
+                        <input type="file" name="image_file" id="imageFile" accept="image/*">
+                        <input class="image-query" type="text" name="text_input_for_image" placeholder="Ask about the image (optional)" value="{{ request.form.text_input_for_image or '' }}">
+                    </div>
+                </div>
+
+                <button type="submit" class="generate-btn" id="submitBtn">
+                    <span>Send</span>
+                    <span class="loader" style="display: none; width:18px; height:18px; border:2px solid white; border-top-color:transparent; border-radius:50%; animation:spin 1s;"></span>
+                </button>
+            </form>
+
+            <!-- feedback message block -->
+            {% if feedback_message %}
+            <div class="feedback-message {% if 'Thank you' in feedback_message %}success{% else %}error{% endif %}">
+                {{ feedback_message }}
+            </div>
+            {% endif %}
+
+            <!-- current query & image -->
+            {% if user_query or image_filename_display %}
+            <div style="margin: 24px 0 12px;">
+                <h3 style="font-weight:500;">📋 Your query</h3>
+                {% if image_filename_display %}
+                    <img src="{{ url_for('static', filename='uploads/' + image_filename_display) }}" class="uploaded-image">
+                {% endif %}
+                {% if user_query %}
+                    <div style="background:#161e2b; padding:16px 22px; border-radius:28px;">{{ user_query }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- solution card -->
+            {% if solution %}
+            <div class="solution-card">
+                <span class="save-badge" id="saveResultBtn" data-query="{{ user_query|e }}" data-solution="{{ solution|e }}">💾 Save</span>
+                <div class="solution-text" style="font-size:1rem; line-height:1.7; color:#dbeafe; max-width:85%;">{{ solution }}</div>
+
+                {% if show_feedback_form %}
+                <div class="feedback-row">
+                    <form method="POST" style="display:flex; gap:20px;">
+                        <input type="hidden" name="original_query_for_feedback_hidden" value="{{ original_query_for_feedback_hidden }}">
+                        <input type="hidden" name="original_solution_hidden" value="{{ original_solution_hidden }}">
+                        <input type="hidden" name="original_input_type_hidden" value="{{ selected_input_type }}">
+                        <button class="fb-btn good" name="feedback" value="good">👍 Yes</button>
+                        <button class="fb-btn bad" name="feedback" value="bad">👎 No</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- saved detail view (hidden) -->
+        <div class="content-card hidden" id="savedDetailView">
+            <h1 style="font-size:2.4rem;">Saved</h1>
+            <div style="background:#1a2332; border-radius:32px; padding:28px;">
+                <strong style="color:#a6befa;">Question</strong>
+                <p id="savedDetailQuery" style="margin:16px 0 28px;"></p>
+                <strong style="color:#a6befa;">Answer</strong>
+                <p id="savedDetailSolution" style="margin-top:16px;"></p>
+            </div>
+            <button class="generate-btn" style="margin-top:28px;" id="backToMainBtn">← Back</button>
+        </div>
+    </main>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script>
+        // ----- HISTORY & LOCALSTORAGE (exactly as first backend) -----
+        let historyItems = JSON.parse(localStorage.getItem('reachai_history') || '[]');
+
+        function renderSidebarHistory() {
+            const container = document.getElementById('historySidebar');
+            if (!container) return;
+            if (historyItems.length === 0) {
+                container.innerHTML = '<div style="color:#5e6f91; padding:6px;">No history</div>';
+                return;
+            }
+            let html = '';
+            historyItems.slice(0,6).forEach(item => {
+                html += `<div class="history-item" data-query="${escapeAttr(item.query)}" data-solution="${escapeAttr(item.solution)}">${item.query.substring(0,30)}</div>`;
+            });
+            container.innerHTML = html;
+            // attach click to show detail
+            document.querySelectorAll('.history-item').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    let q = el.dataset.query, s = el.dataset.solution;
+                    if (q && s) {
+                        document.getElementById('savedDetailQuery').innerText = q;
+                        document.getElementById('savedDetailSolution').innerText = s;
+                        document.getElementById('mainInterface').classList.add('hidden');
+                        document.getElementById('savedDetailView').classList.remove('hidden');
+                    }
+                });
+            });
+        }
+
+        function escapeAttr(str) {
+            return str.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+        }
+
+        function addToHistory(query, solution, type = 'text') {
+            if (!query || !solution) return;
+            const exists = historyItems.some(h => h.query === query && h.solution === solution);
+            if (!exists) {
+                historyItems.unshift({ id: Date.now()+'-'+Math.random(), query, solution, type, timestamp: new Date().toISOString() });
+                localStorage.setItem('reachai_history', JSON.stringify(historyItems));
+                renderSidebarHistory();
+                showToast('Saved to history');
+            }
+        }
+
+        function showToast(msg) {
+            let cont = document.getElementById('toastContainer');
+            let toast = document.createElement('div');
+            toast.className = 'toast'; toast.innerText = msg;
+            cont.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // clear all
+        document.getElementById('clearAllBtn')?.addEventListener('click', () => {
+            if (confirm('Clear all history?')) {
+                historyItems = [];
+                localStorage.setItem('reachai_history', JSON.stringify(historyItems));
+                renderSidebarHistory();
+                showToast('History cleared');
+            }
+        });
+
+        // new chat: just reload or reset – but we keep it simple: reload
+        document.getElementById('newChatBtn')?.addEventListener('click', () => {
+            window.location.href = '/';  // assuming flask route
+        });
+
+        // toggle input fields
+        window.toggleInputs = function() {
+            let type = document.querySelector('input[name="input_type"]:checked').value;
+            document.getElementById('textVoiceBlock').style.display = (type === 'text' || type === 'voice') ? 'block' : 'none';
+            document.getElementById('imageBlock').style.display = (type === 'image') ? 'block' : 'none';
+            let voiceBtn = document.getElementById('voiceRecordBtn');
+            if (voiceBtn) voiceBtn.style.display = (type === 'voice' || type === 'text') ? 'inline-block' : 'none';
+        };
+
+        // voice recognition
+        function setupVoice() {
+            let btn = document.getElementById('voiceRecordBtn');
+            let textarea = document.getElementById('textInput');
+            let status = document.getElementById('voiceStatus');
+            if (!btn || !textarea) return;
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRec) { status.innerText = 'voice not supported'; return; }
+            let rec = new SpeechRec(); rec.continuous = true; rec.interimResults = true;
+            let recording = false;
+            btn.onclick = () => {
+                if (recording) { rec.stop(); recording = false; btn.classList.remove('recording'); return; }
+                recording = true; btn.classList.add('recording'); status.innerText = 'listening...';
+                rec.start();
+                rec.onresult = (e) => {
+                    let t = '';
+                    for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
+                    textarea.value = t;
+                };
+                rec.onend = () => { recording = false; btn.classList.remove('recording'); status.innerText = ''; };
+                rec.onerror = () => { recording = false; btn.classList.remove('recording'); status.innerText = 'error'; };
+            };
+        }
+
+        // save button
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('#saveResultBtn')) {
+                let btn = document.getElementById('saveResultBtn');
+                if (btn) {
+                    let q = btn.dataset.query, sol = btn.dataset.solution;
+                    let type = document.querySelector('input[name="input_type"]:checked')?.value || 'text';
+                    addToHistory(q, sol, type);
+                }
+            }
+        });
+
+        // back button
+        document.getElementById('backToMainBtn')?.addEventListener('click', () => {
+            document.getElementById('mainInterface').classList.remove('hidden');
+            document.getElementById('savedDetailView').classList.add('hidden');
+        });
+
+        // on load
+        window.onload = function() {
+            toggleInputs();
+            renderSidebarHistory();
+            setupVoice();
+
+            {% if saved_results %}
+            let serverItems = {{ saved_results | tojson }};
+            serverItems.forEach(s => {
+                if (s.query && s.solution && !historyItems.some(h => h.query === s.query && h.solution === s.solution)) {
+                    historyItems.unshift({ id: Date.now()+'-'+Math.random(), query: s.query, solution: s.solution, type: 'text', timestamp: s.timestamp || new Date().toISOString() });
+                }
+            });
+            localStorage.setItem('reachai_history', JSON.stringify(historyItems));
+            renderSidebarHistory();
+            {% endif %}f
+
+            document.getElementById('mainForm')?.addEventListener('submit', () => {
+                let btn = document.getElementById('submitBtn');
+                btn.disabled = true;
+                btn.querySelector('.loader').style.display = 'inline-block';
+            });
+        };
+    </script>
+</div>
+</body>
+</html>'

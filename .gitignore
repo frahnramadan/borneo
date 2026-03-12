@@ -1,0 +1,25 @@
+# AI Models
+models/
+
+# Python virtual environment
+venv/
+
+# Uploaded images
+uploads/
+static/uploads/
+
+# Cache
+__pycache__/
+*.pyc
+
+# Large model files
+*.bin
+*.pt
+*.safetensors
+*.gguf
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
